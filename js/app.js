@@ -124,7 +124,7 @@ function agregarFavoritos (apod) {
 
 // Lizarazo Ana
 
-const enlace-video
+const enlacevideo = 0
 
 function mostrarApod(apod) {
     tiulo.textContent = apod.title;
