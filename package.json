@@ -1,0 +1,24 @@
+{
+  "name": "lab-_using_npm_end_of_module_assessment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ann-Lizarazo/LAB-_Using_NPM_End_of_module_Assessment.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ann-Lizarazo/LAB-_Using_NPM_End_of_module_Assessment/issues"
+  },
+  "homepage": "https://github.com/Ann-Lizarazo/LAB-_Using_NPM_End_of_module_Assessment#readme",
+  "dependencies": {
+    "dayjs": "^1.11.23"
+  }
+}

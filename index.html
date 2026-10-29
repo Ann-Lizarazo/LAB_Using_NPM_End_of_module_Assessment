@@ -1,1 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA - Foto Astronómica del Día</title>
+    <link href="css\styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1> NASA - Foto Astronómica del Día</h1>
+        </header>
 
+        <div class="search-section">
+            <div class="search-grid">
+                <div class="search-group">
+                    <label for="searchName"> Buscar por nombre:</label>
+                    <input 
+                        type="text" 
+                        id="searchName" 
+                        placeholder="Ej: Aurora Australis..."
+                    >
+                </div>
+                <div class="search-group">
+                    <label for="searchDate"> Buscar por fecha:</label>
+                    <input 
+                        type="date" 
+                        id="searchDate"
+                        min="1995-06-16"
+                        max=""
+                    >
+                </div>
+                <div>
+                    <button class="btn" id="searchBtn">Buscar</button>
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <button class="btn btn-secondary" id="todayBtn">Ver Foto de Hoy</button>
+            </div>
+           
+        </div>
+
+        <div class="loading" id="loading" style="display: none;">
+            Cargando imagen del universo... 🚀
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="no-results" id="noResults">
+            😔 No se encontraron resultados. Intenta con otra búsqueda.
+        </div>
+
+        <div class="content" id="content">
+            <div class="image-container" id="imageContainer"></div>
+            <div class="details">
+                <h2 id="title"></h2>
+                <p class="date" id="date"></p>
+                <p class="explanation" id="explanation"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="node_modules/dayjs/dayjs.min.js"></script>
+    <script src="node_modules/dayjs/locale/es.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
