@@ -198,38 +198,69 @@ function agregarFavoritos (apod) {
 
 
 
-// Lizarazo Ana
 
-const enlacevideo = document.getElementById("enlace-video");
+
+
+// Lizarazo Ana
+// Elementos del HTML que usa mostrarApod
+
+const titulo = document.getElementById("titulo");
+const fechaApod = document.getElementById("fecha-apod");
+const imagen = document.getElementById("imagen");
+const explicacion = document.getElementById("explicacion");
+const enlaceVideo = document.getElementById("enlace-video");
+const contenedorApod = document.getElementById("apod");
+
+// Muestra una APOD en la página
+// Pone el título, la fecha en español, la imagen y la explicación
+// Si la APOD es un video, muestra el enlace "Ver el video en NASA"
+// (en videos, hdurl trae la imagen de vista previa)
+// Si es una imagen, oculta ese enlace
 
 function mostrarApod(apod) {
-    tiulo.textContent = apod.title;
-    fechaApod.textContent = dayjs(Apod.date).format("D [de] MMMM [de] YYYY");
-    Imagen.src = apod.hdurl;
-    imagen.alt = apod.title;
-    explicacion.innerHTML = apod.explanation;
-
-    if (apod.media_type === "video") {
-        enlaceVideo.href = apod.permalink;
-        enlaceVideo.hidden = false;    
-    }  else  {
-        enlaceVideo.hidden = true; // Si es imagen no se ve 
-    } 
-
-    contenedorApod.hidden = false;
     
+  titulo.textContent = apod.title;
+  fechaApod.textContent = dayjs(apod.date).format("D [de] MMMM [de] YYYY");
+  imagen.src = apod.hdurl;
+  imagen.alt = apod.title;
+  explicacion.innerHTML = apod.explanation; // innerHTML porque viene con HTML
+
+    
+  if (apod.media_type === "video") {
+    enlaceVideo.href = apod.permalink;
+    enlaceVideo.hidden = false;
+  } else {
+    enlaceVideo.hidden = true; // si es imagen, el enlace no se ve
+  }
+
+  contenedorApod.hidden = false;
 }
 
-// Asigna las referencias del HTML y activa el botón "Buscar"
-function inicializar() {
-    inputNombre = document.getElementById("searchName");
-    inputFecha = document.getElementById("searchDate");
-    botonBuscar = document.getElementById("searchBtn");
+// Prepara la página al abrirla:
+// Asigna las referencias del HTML y limita el calendario hasta hoy
+// Activa el botón "Buscar"⭐ y el de "Ver Foto de Hoy"
+// Dibuja los favoritos guardados (para que sobrevivan al recargar)
+// Carga la APOD de hoy
 
-    conectarBuscador();
+
+function inicializar() {
+  inputNombre = document.getElementById("searchName");
+  inputFecha = document.getElementById("searchDate");
+  botonBuscar = document.getElementById("searchBtn");
+  inputFecha.max = dayjs().format("YYYY-MM-DD");
+
+    
+  conectarBuscador();
+  document.getElementById("btn-favorito")
+    .addEventListener("click", () => agregarFavoritos(apodActual));
+  document.getElementById("todayBtn")
+    .addEventListener("click", () => cargarApod());
+  renderFavoritos();
+  cargarApod();
 }
 
 inicializar();
+
 
 
 
