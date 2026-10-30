@@ -216,3 +216,6 @@ h1 {
         font-size: 1rem;
     }
 }
+
+[hidden] { display: none !important; }
+#imagen { max-width: 100%; height: auto; }

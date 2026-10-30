@@ -212,7 +212,7 @@ const enlaceVideo = document.getElementById("enlace-video");
 const contenedorApod = document.getElementById("apod");
 
 // Muestra una APOD en la página
-// Pone el título, la fecha en español, la imagen y la explicación
+// Coloca el título, la fecha en español, la imagen y la explicación
 // Si la APOD es un video, muestra el enlace "Ver el video en NASA"
 // (en videos, hdurl trae la imagen de vista previa)
 // Si es una imagen, oculta ese enlace
@@ -235,6 +235,7 @@ function mostrarApod(apod) {
 
   contenedorApod.hidden = false;
 }
+
 
 // Prepara la página al abrirla:
 // Asigna las referencias del HTML y limita el calendario hasta hoy
