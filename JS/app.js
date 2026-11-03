@@ -2,40 +2,153 @@
 // thomas
 
 
-dayjs.locale('es');
+dayjs.locale("es");
 
-const url_base = "https://science.nasa.gov/wp-json/wp/v2/apod-basic";
+// Parte de la URL de la NASA que nunca cambia.
+// Es const porque su valor no debe modificarse.
+const URL_BASE = "https://science.nasa.gov/wp-json/wp/v2/apod-basic";
 
-function mostrar(texto){
-    document.getElementByid("mensaje").textcontent = texto;
+// Guarda la APOD que se está mostrando en este momento.
+// - Es let porque cambia cada vez que se carga una nueva.
+// - Empieza en null porque al abrir la página todavía no hay nada cargado.
+// - La Persona 4 (favoritos) la usa para saber qué APOD guardar.
+let apodActual = null;
+
+
+/* ---------- 2. FUNCIONES TEMPORALES ----------
+   Son "andamios" para poder probar esta parte sin esperar a los compañeros.
+   Cuando la Persona 2 entregue las versiones reales, BORRAR estas dos
+   funciones para no tenerlas duplicadas (JavaScript usaría la última
+   que encuentre y causaría errores difíciles de rastrear). */
+
+// Escribe un texto en el <p id="mensaje"> del HTML.
+// Se usa para "Cargando…" y para mostrar errores EN PANTALLA (no solo en consola).
+// Se usa textContent (y no innerHTML) porque son mensajes de texto simple.
+function mostrarMensaje(texto) {
+  document.getElementById("mensaje").textContent = texto;
 }
 
-function mostrarApod(apod){
-  console.log(apod.title, dayjs(apod.date).format("D [de] MMMM [de] YYYY"), apod.hdurl);
+// Versión de prueba: solo imprime los datos en la consola del navegador.
+// La versión real (Persona 2) los dibujará en la página.
+function mostrarApod(apod) {
+  console.log(
+    apod.title,                                       // título (en inglés)
+    dayjs(apod.date).format("D [de] MMMM [de] YYYY"), // fecha en español
+    apod.hdurl                                        // URL de la imagen
+  );
 }
 
 
 
-function consturl(fechaIso){
-    if(!fechaIso){
-        return `${url_base}?per_page=1`;
+
+/**
+ * construirUrl: decide qué dirección pedirle a la NASA.
+ *
+ * @param {string} [fechaISO] - Fecha en formato "AAAA-MM-DD" (ej. "2015-07-04").
+ *                              Si no se envía, se pide la APOD de hoy.
+ * @returns {string} La URL completa lista para el fetch.
+ *
+ * Ejemplos:
+ *   construirUrl()             -> ".../apod-basic?per_page=1"
+ *   construirUrl("2015-07-04") -> ".../apod-basic/150704"
+ *
+ * Existe como función aparte porque el <input type="date"> entrega la fecha
+ * como "AAAA-MM-DD", pero la API la necesita como "AAMMDD".
+ */
+function construirUrl(fechaISO) {
+  // Sin fecha (undefined o vacía) -> la APOD de hoy.
+  // per_page=1 hace que la API devuelva solo la más reciente.
+  if (!fechaISO) {
+    return `${URL_BASE}?per_page=1`;
+  }
+
+  // Con fecha -> se convierte "2015-07-04" en "150704" y se agrega a la URL.
+  return `${URL_BASE}/${dayjs(fechaISO).format("YYMMDD")}`;
 }
-     return `${URL_BASE}/${dayjs(fechaISO).format("YYMMDD")}`;
+
+
+/**
+ * pedirApod: va a internet, trae los datos y devuelve UN objeto APOD limpio.
+ *
+ * @param {string} [fechaISO] - Fecha "AAAA-MM-DD" o nada para hoy.
+ * @returns {Promise<Object>} El objeto APOD (title, date, hdurl, etc.).
+ * @throws {Error} Si no hay APOD para esa fecha o la respuesta viene vacía.
+ *
+ * Es async porque pedir datos por internet toma tiempo; async permite usar
+ * await para "esperar" la respuesta sin congelar la página.
+ */
+async function pedirApod(fechaISO) {
+  // Envía la petición y espera la respuesta del servidor.
+  const respuesta = await fetch(construirUrl(fechaISO));
+
+  // IMPORTANTE: fetch NO lanza error cuando el servidor responde 404.
+  // Solo falla si no hay conexión. Por eso se revisa respuesta.ok
+  // (false para 404, 500, etc.) y se lanza el error a mano con throw.
+  // Este throw salta directo al catch de cargarApod.
+  if (!respuesta.ok) {
+    throw new Error("No hay APOD para esa fecha");
+  }
+
+  // Convierte el texto JSON de la respuesta en objeto/arreglo de JavaScript.
+  // También es asíncrono, por eso lleva await.
+  const datos = await respuesta.json();
+
+  // La API devuelve DOS formas distintas:
+  //  - Para "hoy"  -> un ARREGLO con una APOD adentro: [ {...} ]  -> datos[0]
+  //  - Para fecha  -> un OBJETO directamente:           {...}     -> datos
+  // Esta línea unifica ambos casos para que el resto del código no se entere.
+  const apod = fechaISO ? datos : datos[0];
+
+  // Protección extra: si el arreglo llegó vacío, datos[0] sería undefined
+  // y la página se rompería más adelante. Mejor detectarlo aquí.
+  if (!apod) {
+    throw new Error("La NASA no devolvió ninguna APOD");
+  }
+
+  // Entrega el objeto ya listo a quien llamó la función.
+  return apod;
 }
-construirUrl() 
-construirUrl("2015-07-04")
 
 
-async function pedirApod(fechaIso){
-    
-    const respuesta = await fetch(construirUrl(fechaIso));
-    
-    if(!respuesta.ok){
-        const datos = await respuesta.json();
-        const apod = fechaIso ? datos : datos[0];
-    }
+/**
+ * cargarApod: FUNCIÓN PRINCIPAL. Es la que usarán los demás compañeros.
+ *
+ * @param {string} [fechaISO] - Fecha "AAAA-MM-DD" o nada para hoy.
+ *
+ * Quién la llama:
+ *   - Al abrir la página:      cargarApod()
+ *   - Persona 3 (búsqueda):    cargarApod("2024-03-15")
+ *   - Persona 4 (favoritos):   cargarApod(favorito.date)
+ *
+ * Nunca lanza errores hacia afuera: los atrapa con try/catch y los muestra
+ * en pantalla, así la página no se rompe.
+ */
+async function cargarApod(fechaISO) {
+  // Cumple el requisito de mostrar "Cargando…" mientras llega la respuesta.
+  mostrarMensaje("Cargando…");
 
-    
+  try {
+    // Todo lo que pueda fallar va dentro del try.
+    const apod = await pedirApod(fechaISO);
+
+    // Se guarda DESPUÉS de que pedirApod tuvo éxito. Si falló, esta línea
+    // nunca se ejecuta y apodActual conserva la APOD anterior, que es la que
+    // sigue visible. Así lo que se guarda en favoritos coincide con lo que
+    // el usuario está viendo.
+    apodActual = apod;
+
+    // Le pasa los datos a la función de la Persona 2, que los pinta.
+    // Aquí se separa "obtener datos" (tu parte) de "mostrar datos" (la suya).
+    mostrarApod(apod);
+
+    // Todo salió bien: limpia el mensaje "Cargando…".
+    mostrarMensaje("");
+  } catch (error) {
+    // Si algo falló (404, sin internet, JSON inválido…) se llega aquí.
+    // error.message es el texto que escribimos en los throw, o el que genera
+    // el navegador si fue un fallo de red.
+    mostrarMensaje(`Error: ${error.message}`);
+  }
 }
 
 // mauro - buscador filtro (texto y fecha)
