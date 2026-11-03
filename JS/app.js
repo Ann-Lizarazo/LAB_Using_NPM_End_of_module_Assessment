@@ -1,6 +1,4 @@
-
-// thomas
-
+// Thomas
 
 dayjs.locale("es");
 
@@ -14,6 +12,8 @@ const URL_BASE = "https://science.nasa.gov/wp-json/wp/v2/apod-basic";
 // - La Persona 4 (favoritos) la usa para saber qué APOD guardar.
 let apodActual = null;
 
+const mensaje = document.getElementById("mensaje");
+
 
 /* ---------- 2. FUNCIONES TEMPORALES ----------
    Son "andamios" para poder probar esta parte sin esperar a los compañeros.
@@ -24,18 +24,10 @@ let apodActual = null;
 // Escribe un texto en el <p id="mensaje"> del HTML.
 // Se usa para "Cargando…" y para mostrar errores EN PANTALLA (no solo en consola).
 // Se usa textContent (y no innerHTML) porque son mensajes de texto simple.
-function mostrarMensaje(texto) {
-  document.getElementById("mensaje").textContent = texto;
-}
-
-// Versión de prueba: solo imprime los datos en la consola del navegador.
-// La versión real (Persona 2) los dibujará en la página.
-function mostrarApod(apod) {
-  console.log(
-    apod.title,                                       // título (en inglés)
-    dayjs(apod.date).format("D [de] MMMM [de] YYYY"), // fecha en español
-    apod.hdurl                                        // URL de la imagen
-  );
+function mostrarMensaje(texto, tipo = "error") {
+  mensaje.textContent = texto;
+  mensaje.className = `mensaje ${tipo}`;
+  mensaje.hidden = !texto; // si el texto está vacío, el mensaje se oculta
 }
 
 
@@ -125,7 +117,7 @@ async function pedirApod(fechaISO) {
  */
 async function cargarApod(fechaISO) {
   // Cumple el requisito de mostrar "Cargando…" mientras llega la respuesta.
-  mostrarMensaje("Cargando…");
+  mostrarMensaje("Cargando…", "info");
 
   try {
     // Todo lo que pueda fallar va dentro del try.
@@ -147,29 +139,37 @@ async function cargarApod(fechaISO) {
     // Si algo falló (404, sin internet, JSON inválido…) se llega aquí.
     // error.message es el texto que escribimos en los throw, o el que genera
     // el navegador si fue un fallo de red.
-    mostrarMensaje(`Error: ${error.message}`);
+    mostrarMensaje(`Error: ${error.message}`, "error");
   }
 }
 
-// mauro - buscador filtro (texto y fecha)
+// Mauro - Buscador filtro (texto y fecha)
+
+const PRIMERA_APOD = "1995-06-16";
+
+function validarFecha(fecha) {
+    if (!fecha) {
+        return "Elige una fecha para buscar.";
+    }
+    if (dayjs(fecha).isAfter(dayjs(), "day")) {
+        return "Esa fecha es futura: la NASA todavía no tiene esa foto.";
+    }
+    if (dayjs(fecha).isBefore(dayjs(PRIMERA_APOD), "day")) {
+        return "La primera APOD es del 16 de junio de 1995. Elige una fecha posterior.";
+    }
+    return null;
+}
 
 // Busca un favorito por su fecha exacta (formato "YYYY-MM-DD")
 function buscarPorFecha(fecha) {
-    if (!fecha) {
-        mostrarMensaje("Debes indicar una fecha para buscar.", "error");
+    const error = validarFecha(fecha);
+    if (error) {
+        mostrarMensaje(error, "error");
         return null;
     }
 
-    const fechaNormalizada = dayjs(fecha).format("YYYY-MM-DD");
-    const resultado = favoritos.find((f) => f.date === fechaNormalizada);
-
-    if (!resultado) {
-        mostrarMensaje("No hay ningún favorito con esa fecha.", "error");
-        return null;
-    }
-
-    mostrarApod(resultado);
-    return resultado;
+    renderFavoritos(); // vuelve a mostrar la lista completa de favoritos
+    return cargarApod(fecha);
 }
 
 // Busca favoritos cuyo título contenga el texto indicado (sin distinguir mayúsculas)
@@ -189,12 +189,10 @@ function buscarPorNombre(nombre) {
         return [];
     }
 
-    mostrarApod(resultados[0]);
+    renderFavoritos(resultados);
+    cargarApod(resultados[0].date);
     return resultados;
 }
-
-// construirUrl("2015-07-04") 
-// construirUrl("2016-09-13")  
 
 // Función del botón "Buscar": decide si busca por fecha o por nombre
 // según lo que tenga cada input (si hay fecha, se prioriza la fecha)
@@ -203,7 +201,7 @@ function buscar() {
     const nombre = inputNombre.value.trim();
 
     if (!fecha && !nombre) {
-        mostrarMensaje("Escribe un nombre o elige una fecha para buscar.", "error");
+        mostrarMensaje("Elige una fecha (o escribe el nombre de un favorito) para buscar.", "error");
         return null;
     }
 
@@ -234,37 +232,22 @@ let inputFecha;
 let botonBuscar;  
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Kevin Duvan
 
 const seccionFavoritos = "mis_favoritos"
 
+const listaFavoritos = document.getElementById("lista-favoritos");
+const favoritosVacio = document.getElementById("favoritos-vacio");
+
 let favoritos = cargarFavoritos();
 
 function cargarFavoritos () {
-    const conseguir = localStorage.getItem(seccionFavoritos);
-    return conseguir ? JSON.parse(conseguir) : [];
-
-    
+    try {
+        const conseguir = localStorage.getItem(seccionFavoritos);
+        return conseguir ? JSON.parse(conseguir) : [];
+    } catch (error) {
+        return [];
+    }
 }
 
 function guardarFavoritos() {
@@ -275,7 +258,7 @@ function guardarFavoritos() {
 function agregarFavoritos (apod) {
 
     if (!apod) {
-        mostrarMensaje ("Error", "error");
+        mostrarMensaje ("Todavía no hay una APOD cargada para guardar.", "error");
         return false;
     
     }
@@ -291,30 +274,45 @@ function agregarFavoritos (apod) {
     guardarFavoritos();
     renderFavoritos();
 
-    mostrarMensaje("guardada en favoritos", "guardado correctamente");
+    mostrarMensaje("APOD guardada en favoritos.", "exito");
     return true;
 }
 
+function eliminarFavorito(fecha) {
+    favoritos = favoritos.filter((f) => f.date !== fecha);
+    guardarFavoritos();
+    renderFavoritos();
+}
+
+// A
+// Dibuja la lista de favoritos; al hacer clic en uno se carga esa APOD.
+// Sin argumento dibuja todos; con un arreglo, dibuja solo esos.
+function renderFavoritos(lista = favoritos) {
+    listaFavoritos.innerHTML = "";
+    favoritosVacio.hidden = favoritos.length > 0;
+
+    lista.forEach((fav) => {
+        const item = document.createElement("li");
+
+        const abrir = document.createElement("button");
+        abrir.type = "button";
+        abrir.className = "favorito-abrir";
+        abrir.textContent = `${dayjs(fav.date).format("D MMM YYYY")} · ${fav.title}`;
+        abrir.addEventListener("click", () => cargarApod(fav.date));
+
+        const eliminar = document.createElement("button");
+        eliminar.type = "button";
+        eliminar.className = "favorito-eliminar";
+        eliminar.textContent = "Eliminar";
+        eliminar.addEventListener("click", () => eliminarFavorito(fav.date));
+
+        item.append(abrir, eliminar);
+        listaFavoritos.appendChild(item);
+    });
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Lizarazo Ana
+// Ana
 // Elementos del HTML que usa mostrarApod
 
 const titulo = document.getElementById("titulo");
@@ -334,7 +332,14 @@ function mostrarApod(apod) {
     
   titulo.textContent = apod.title;
   fechaApod.textContent = dayjs(apod.date).format("D [de] MMMM [de] YYYY");
-  imagen.src = apod.hdurl;
+
+  if (apod.hdurl) {
+    imagen.src = apod.hdurl;
+    imagen.hidden = false;
+  } else {
+    imagen.removeAttribute("src");
+    imagen.hidden = true;
+  }
   imagen.alt = apod.title;
   explicacion.innerHTML = apod.explanation; // innerHTML porque viene con HTML
 
@@ -368,7 +373,10 @@ function inicializar() {
   document.getElementById("btn-favorito")
     .addEventListener("click", () => agregarFavoritos(apodActual));
   document.getElementById("todayBtn")
-    .addEventListener("click", () => cargarApod());
+    .addEventListener("click", () => {
+      renderFavoritos();
+      cargarApod();
+    });
   renderFavoritos();
   cargarApod();
 }
