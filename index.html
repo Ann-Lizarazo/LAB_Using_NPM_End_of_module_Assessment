@@ -4,78 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NASA - Foto Astronómica del Día</title>
-    <link href="css\styles.css" rel="stylesheet">
+    <link href="CSS/styles.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1> NASA - Foto Astronómica del Día</h1>
+            <h1>NASA - Foto Astronómica del Día</h1>
         </header>
 
         <div class="search-section">
             <div class="search-grid">
                 <div class="search-group">
-                    <label for="searchName"> Buscar por nombre:</label>
-                    <input 
-                        type="text" 
-                        id="searchName" 
-                        placeholder="Ej: Aurora Australis..."
-                    >
+                    <label for="searchName">Buscar un favorito por nombre:</label>
+                    <input type="text" id="searchName" placeholder="Ej: Aurora Australis...">
                 </div>
                 <div class="search-group">
-                    <label for="searchDate"> Buscar por fecha:</label>
-                    <input 
-                        type="date" 
-                        id="searchDate"
-                        min="1995-06-16"
-                        max=""
-                    >
+                    <label for="searchDate">Buscar por fecha:</label>
+                    <input type="date" id="searchDate" min="1995-06-16">
                 </div>
                 <div>
-                    <button class="btn" id="searchBtn">Buscar</button>
+                    <button type="button" class="btn" id="searchBtn">Buscar</button>
                 </div>
             </div>
-            <div style="text-align: center;">
-                <button class="btn btn-secondary" id="todayBtn">Ver Foto de Hoy</button>
-            </div>
-           
-        </div>
-
-        <div class="loading" id="loading" style="display: none;">
-            Cargando imagen del universo... 🚀
-        </div>
-
-        <div class="error" id="error"></div>
-
-        <div class="no-results" id="noResults">
-            😔 No se encontraron resultados. Intenta con otra búsqueda.
-        </div>
-
-        <div class="content" id="content">
-            <div class="image-container" id="imageContainer"></div>
-            <div class="details">
-                <h2 id="title"></h2>
-                <p class="date" id="date"></p>
-                <p class="explanation" id="explanation"></p>
+            <div class="centrado">
+                <button type="button" class="btn btn-secondary" id="todayBtn">Ver foto de hoy</button>
             </div>
         </div>
-        
-                <!-- Zona donde mostrarApod pinta la APOD -->
 
+        <!-- Aquí salen "Cargando…", los errores y los avisos -->
+        <p id="mensaje" class="mensaje" role="status" hidden></p>
+
+        <!-- Zona donde mostrarApod pinta la APOD -->
         <div id="apod" hidden>
-            <div>
+            <div class="image-container">
                 <img id="imagen" src="" alt="">
-                <a id="enlace-video" href="#" target="_blank" rel="noopener" hidden>Ver el video en NASA</a>
             </div>
-            <h2 id="titulo"></h2>
-            <p id="fecha-apod"></p>
-            <div id="explicacion"></div>
+            <div class="details">
+                <h2 id="titulo"></h2>
+                <p class="date" id="fecha-apod"></p>
+                <a id="enlace-video" class="enlace-video" href="#" target="_blank" rel="noopener" hidden>Ver el video en NASA</a>
+                <div class="explanation" id="explicacion"></div>
+                <button type="button" class="btn btn-favorito" id="btn-favorito">⭐ Guardar en favoritos</button>
+            </div>
         </div>
 
+        <section class="favoritos">
+            <h2>Mis favoritos</h2>
+            <p id="favoritos-vacio" class="favoritos-vacio">Todavía no se tiene favoritos guardados</p>
+            <ul id="lista-favoritos" class="lista-favoritos"></ul>
+        </section>
     </div>
 
     <script src="node_modules/dayjs/dayjs.min.js"></script>
     <script src="node_modules/dayjs/locale/es.js"></script>
-    <script src="js/app.js"></script>
+    <script src="JS/app.js"></script>
 </body>
 </html>
