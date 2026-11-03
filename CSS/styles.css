@@ -7,15 +7,21 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #fff;
-    background-image: url(IMG\steve-busch-LxNniRiDjXQ-unsplash.jpg) !important;
+    /* Color de respaldo por si la imagen no carga.
+       La ruta es relativa a ESTE archivo (css/), por eso lleva ../ */
+    background: #0b1020 url("../IMG/steve-busch-LxNniRiDjXQ-unsplash.jpg") center / cover fixed no-repeat;
     min-height: 100vh;
     padding: 20px;
 }
+
+[hidden] { display: none !important; }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
 }
+
+.centrado { text-align: center; }
 
 header {
     text-align: center;
@@ -32,6 +38,7 @@ h1 {
     background-clip: text;
 }
 
+/* ---------- Buscador ---------- */
 .search-section {
     background: rgba(255, 255, 255, 0.1);
     padding: 30px;
@@ -44,6 +51,7 @@ h1 {
     display: grid;
     grid-template-columns: 1fr 1fr auto;
     gap: 15px;
+    align-items: end;
     margin-bottom: 15px;
 }
 
@@ -78,7 +86,6 @@ h1 {
 
 .btn {
     padding: 12px 30px;
-    margin-top: 30px;
     background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
     border: none;
     border-radius: 8px;
@@ -86,7 +93,6 @@ h1 {
     font-size: 1rem;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
-    align-self: flex-end;
 }
 
 .btn:hover {
@@ -94,35 +100,38 @@ h1 {
     box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
-.btn:active {
-    transform: translateY(0);
+.btn:active { transform: translateY(0); }
+
+.btn:focus-visible,
+.favorito-abrir:focus-visible,
+.favorito-eliminar:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
 }
 
-.btn-secondary {
-    background: rgba(255, 255, 255, 0.2);
+.btn-secondary { background: rgba(255, 255, 255, 0.2); }
+.btn-secondary:hover { background: rgba(255, 255, 255, 0.3); }
+
+/* ---------- Mensajes ---------- */
+.mensaje {
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 5px solid #667eea;
+    background: rgba(255, 255, 255, 0.1);
 }
 
-.btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
+.mensaje.error { border-left-color: #ff6b6b; background: rgba(255, 0, 0, 0.2); }
+.mensaje.exito { border-left-color: #51cf66; background: rgba(0, 200, 80, 0.2); }
 
-.info-text {
-    font-size: 0.9rem;
-    color: #aaa;
-    margin-top: 10px;
-}
-
-.content {
-    display: none;
+/* ---------- APOD ---------- */
+#apod {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
     overflow: hidden;
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.content.active {
-    display: block;
+    margin-bottom: 30px;
 }
 
 .image-container {
@@ -135,16 +144,14 @@ h1 {
     background: #000;
 }
 
-.image-container img,
-.image-container iframe {
+#imagen {
     max-width: 100%;
     max-height: 600px;
+    height: auto;
     object-fit: contain;
 }
 
-.details {
-    padding: 30px;
-}
+.details { padding: 30px; }
 
 .details h2 {
     font-size: 2rem;
@@ -158,64 +165,72 @@ h1 {
     margin-bottom: 20px;
 }
 
+.enlace-video {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #2aa1e6;
+    font-weight: 600;
+}
+
 .details .explanation {
     font-size: 1.1rem;
     line-height: 1.8;
     color: #ddd;
+    margin-bottom: 25px;
 }
 
-.loading {
-    text-align: center;
-    padding: 40px;
-    font-size: 1.2rem;
-    color: #667eea;
+.explanation a { color: #2aa1e6; }
+
+/* ---------- Favoritos ---------- */
+.favoritos {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
 }
 
-.error {
-    background: rgba(255, 0, 0, 0.2);
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-    display: none;
+.favoritos h2 { margin-bottom: 15px; color: #667eea; }
+.favoritos-vacio { color: #aaa; }
+
+.lista-favoritos {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.error.active {
-    display: block;
+.lista-favoritos li { display: flex; gap: 10px; }
+
+.favorito-abrir {
+    flex: 1;
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
 }
 
-.no-results {
-    text-align: center;
-    padding: 40px;
-    color: #aaa;
-    font-size: 1.1rem;
-    display: none;
+.favorito-abrir:hover { border-color: #667eea; }
+
+.favorito-eliminar {
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: transparent;
+    color: #ff9c9c;
+    font-size: 0.95rem;
+    cursor: pointer;
 }
 
-.no-results.active {
-    display: block;
-}
-
+/* ---------- Celular ---------- */
 @media (max-width: 768px) {
-    .search-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .btn {
-        width: 100%;
-    }
-
-    h1 {
-        font-size: 1.8rem;
-    }
-
-    .details h2 {
-        font-size: 1.5rem;
-    }
-
-    .details .explanation {
-        font-size: 1rem;
-    }
+    .search-grid { grid-template-columns: 1fr; }
+    .btn { width: 100%; }
+    h1 { font-size: 1.8rem; }
+    .details h2 { font-size: 1.5rem; }
+    .details .explanation { font-size: 1rem; }
+    .details, .favoritos, .search-section { padding: 20px; }
 }
-
-[hidden] { display: none !important; }
-#imagen { max-width: 100%; height: auto; }
