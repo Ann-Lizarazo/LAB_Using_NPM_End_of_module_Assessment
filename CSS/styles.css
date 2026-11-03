@@ -7,8 +7,7 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #fff;
-    /* Color de respaldo por si la imagen no carga.
-       La ruta es relativa a ESTE archivo (css/), por eso lleva ../ */
+    /* Color de respaldo por si la imagen no carga*/
     background: #0b1020 url("../IMG/steve-busch-LxNniRiDjXQ-unsplash.jpg") center / cover fixed no-repeat;
     min-height: 100vh;
     padding: 20px;
