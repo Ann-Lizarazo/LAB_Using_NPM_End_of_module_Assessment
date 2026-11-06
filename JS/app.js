@@ -266,15 +266,32 @@ async function buscarPorNombre(nombre) {
             return [];
         }
 
-        // Elige el candidato cuyo título sea más parecido al texto buscado
+        // Elige el candidato cuyo título sea más parecido al texto buscado.
+        // Se priorizan los títulos que CONTIENEN el texto buscado; entre esos,
+        // el de menor distancia de Levenshtein. Si ninguno lo contiene, se usa
+        // el más cercano por Levenshtein (para tolerar nombres mal escritos).
         let mejor = candidatos[0];
-        let mejorDistancia = Infinity;
+        let mejorPuntaje = Infinity;
         for (const c of candidatos) {
-            const d = distanciaLevenshtein(texto, normalizarTexto(c.title));
-            if (d < mejorDistancia) {
-                mejorDistancia = d;
+            const tituloNorm = normalizarTexto(c.title);
+            const contiene = tituloNorm.includes(texto);
+            const d = distanciaLevenshtein(texto, tituloNorm);
+            const puntaje = contiene ? d : 1000 + d;
+            if (puntaje < mejorPuntaje) {
+                mejorPuntaje = puntaje;
                 mejor = c;
             }
+        }
+
+        // Si ningún título contiene el texto y el más cercano está demasiado
+        // lejos (no es un nombre parecido), no se muestra una foto al azar.
+        const mejorTituloNorm = normalizarTexto(mejor.title);
+        const mejorContiene = mejorTituloNorm.includes(texto);
+        const mejorDistancia = distanciaLevenshtein(texto, mejorTituloNorm);
+        const umbral = Math.max(3, Math.ceil(texto.length * 0.5) + 2);
+        if (!mejorContiene && mejorDistancia > umbral) {
+            mostrarMensaje("No se encontró ninguna foto de la NASA con ese nombre.", "error");
+            return [];
         }
 
         await cargarApod(mejor.date);
