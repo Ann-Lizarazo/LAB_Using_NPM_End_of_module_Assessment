@@ -277,9 +277,9 @@ async function buscarPorNombre(nombre) {
             }
         }
 
-        mostrarMensaje(`Mostrando la foto más parecida: "${mejor.title}".`, "info");
         renderFavoritos();
-        cargarApod(mejor.date);
+        await cargarApod(mejor.date);
+        mostrarMensaje(`Mostrando la foto más parecida: "${mejor.title}".`, "info");
         return [mejor];
     } catch (error) {
         mostrarMensaje(`Error: ${error.message}`, "error");
