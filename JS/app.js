@@ -277,7 +277,6 @@ async function buscarPorNombre(nombre) {
             }
         }
 
-        renderFavoritos();
         await cargarApod(mejor.date);
         mostrarMensaje(`Mostrando la foto más parecida: "${mejor.title}".`, "info");
         return [mejor];
