@@ -227,19 +227,19 @@ async function buscarPorNombre(nombre) {
     const texto = normalizarTexto(nombre);
     mostrarMensaje("Cargando…", "info");
 
-    try {
+    const meses = {
+        january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+        july: 7, august: 8, september: 9, october: 10, november: 11, december: 12
+    };
+
+    async function obtenerCandidatos(termino) {
         const url = "https://science.nasa.gov/wp-json/wp/v2/search?search="
-            + encodeURIComponent(nombre) + "&per_page=100";
+            + encodeURIComponent(termino) + "&per_page=100";
         const respuesta = await fetch(url);
         if (!respuesta.ok) {
             throw new Error("No se pudo buscar en la NASA");
         }
         const datos = await respuesta.json();
-
-        const meses = {
-            january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
-            july: 7, august: 8, september: 9, october: 10, november: 11, december: 12
-        };
 
         const candidatos = [];
         for (const item of datos) {
@@ -253,12 +253,26 @@ async function buscarPorNombre(nombre) {
             const mes = meses[mesNombre];
             if (!mes) continue;
 
-            const fecha = `${anio}-${String(mes).padStart(2, "0")}-${dia}`;
+            const fecha = anio + "-" + String(mes).padStart(2, "0") + "-" + dia;
             const tituloLimpio = titulo
                 .replace(/^APOD:\s*\d{4}\s+\w+\s+\d{1,2}\s*[\u2013\u2014-]\s*/i, "")
                 .trim();
 
             candidatos.push({ title: tituloLimpio || titulo, date: fecha });
+        }
+        return candidatos;
+    }
+
+    try {
+        let candidatos = await obtenerCandidatos(nombre);
+
+        // Si no hubo resultados, se intenta con la primera palabra del término
+        // (ayuda con nombres mal escritos o parciales).
+        if (candidatos.length === 0) {
+            const primeraPalabra = nombre.trim().split(/\s+/)[0];
+            if (primeraPalabra && primeraPalabra.toLowerCase() !== nombre.trim().toLowerCase()) {
+                candidatos = await obtenerCandidatos(primeraPalabra);
+            }
         }
 
         if (candidatos.length === 0) {
@@ -295,10 +309,10 @@ async function buscarPorNombre(nombre) {
         }
 
         await cargarApod(mejor.date);
-        mostrarMensaje(`Mostrando la foto más parecida: "${mejor.title}".`, "info");
+        mostrarMensaje('Mostrando la foto más parecida: "' + mejor.title + '".', "info");
         return [mejor];
     } catch (error) {
-        mostrarMensaje(`Error: ${error.message}`, "error");
+        mostrarMensaje("Error: " + error.message, "error");
         return [];
     }
 }
