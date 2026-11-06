@@ -289,8 +289,14 @@ async function buscarPorNombre(nombre) {
         for (const c of candidatos) {
             const tituloNorm = normalizarTexto(c.title);
             const contiene = tituloNorm.includes(texto);
+            const primerPalabraQuery = texto.split(/\\s+/)[0];
+            const primerPalabraTitulo = tituloNorm.split(/\\s+/)[0];
+            const primeraCoincide = primerPalabraQuery && primerPalabraQuery === primerPalabraTitulo;
             const d = distanciaLevenshtein(texto, tituloNorm);
-            const puntaje = contiene ? d : 1000 + d;
+            let puntaje;
+            if (contiene) puntaje = d;
+            else if (primeraCoincide) puntaje = 500 + d;
+            else puntaje = 1000 + d;
             if (puntaje < mejorPuntaje) {
                 mejorPuntaje = puntaje;
                 mejor = c;
