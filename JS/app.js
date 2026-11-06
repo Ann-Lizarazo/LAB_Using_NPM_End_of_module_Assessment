@@ -172,26 +172,119 @@ function buscarPorFecha(fecha) {
     return cargarApod(fecha);
 }
 
-// Busca favoritos cuyo título contenga el texto indicado (sin distinguir mayúsculas)
-function buscarPorNombre(nombre) {
+// Normaliza un texto para compararlo sin importar mayúsculas, acentos ni espacios extra
+function normalizarTexto(texto) {
+    return (texto || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+// Distancia de Levenshtein entre dos cadenas (cuántos cambios hacen falta
+// para pasar de una a la otra). Sirve para medir qué tan "parecidos" son.
+
+
+// Decodifica entidades HTML (como &#8211;) en un texto
+function decodificarHtml(texto) {
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = texto || "";
+    return textarea.value;
+}
+
+function distanciaLevenshtein(a, b) {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+
+    let anterior = Array.from({ length: b.length + 1 }, (_, i) => i);
+    let actual = new Array(b.length + 1);
+
+    for (let i = 1; i <= a.length; i++) {
+        actual[0] = i;
+        for (let j = 1; j <= b.length; j++) {
+            const costo = a[i - 1] === b[j - 1] ? 0 : 1;
+            actual[j] = Math.min(
+                anterior[j] + 1,        // borrado
+                actual[j - 1] + 1,      // inserción
+                anterior[j - 1] + costo // sustitución
+            );
+        }
+        [anterior, actual] = [actual, anterior];
+    }
+    return anterior[b.length];
+}
+
+// Busca una APOD por su nombre/título usando la API de la NASA (no los favoritos).
+// Pide al endpoint de búsqueda de WordPress los resultados, filtra los que son APOD,
+// extrae su fecha del título y carga la más parecida.
+async function buscarPorNombre(nombre) {
     if (!nombre) {
         mostrarMensaje("Debes escribir un nombre para buscar.", "error");
         return [];
     }
 
-    const texto = nombre.trim().toLowerCase();
-    const resultados = favoritos.filter((f) =>
-        f.title && f.title.toLowerCase().includes(texto)
-    );
+    const texto = normalizarTexto(nombre);
+    mostrarMensaje("Cargando…", "info");
 
-    if (resultados.length === 0) {
-        mostrarMensaje("No se encontró ningún favorito con ese nombre.", "error");
+    try {
+        const url = "https://science.nasa.gov/wp-json/wp/v2/search?search="
+            + encodeURIComponent(nombre) + "&per_page=100";
+        const respuesta = await fetch(url);
+        if (!respuesta.ok) {
+            throw new Error("No se pudo buscar en la NASA");
+        }
+        const datos = await respuesta.json();
+
+        const meses = {
+            january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+            july: 7, august: 8, september: 9, october: 10, november: 11, december: 12
+        };
+
+        const candidatos = [];
+        for (const item of datos) {
+            const titulo = decodificarHtml(item.title || "");
+            const coincidencia = titulo.match(/^APOD:\s*(\d{4})\s+(\w+)\s+(\d{1,2})/i);
+            if (!coincidencia) continue;
+
+            const anio = coincidencia[1];
+            const mesNombre = coincidencia[2].toLowerCase();
+            const dia = coincidencia[3].padStart(2, "0");
+            const mes = meses[mesNombre];
+            if (!mes) continue;
+
+            const fecha = `${anio}-${String(mes).padStart(2, "0")}-${dia}`;
+            const tituloLimpio = titulo
+                .replace(/^APOD:\s*\d{4}\s+\w+\s+\d{1,2}\s*[\u2013\u2014-]\s*/i, "")
+                .trim();
+
+            candidatos.push({ title: tituloLimpio || titulo, date: fecha });
+        }
+
+        if (candidatos.length === 0) {
+            mostrarMensaje("No se encontró ninguna foto de la NASA con ese nombre.", "error");
+            return [];
+        }
+
+        // Elige el candidato cuyo título sea más parecido al texto buscado
+        let mejor = candidatos[0];
+        let mejorDistancia = Infinity;
+        for (const c of candidatos) {
+            const d = distanciaLevenshtein(texto, normalizarTexto(c.title));
+            if (d < mejorDistancia) {
+                mejorDistancia = d;
+                mejor = c;
+            }
+        }
+
+        mostrarMensaje(`Mostrando la foto más parecida: "${mejor.title}".`, "info");
+        renderFavoritos();
+        cargarApod(mejor.date);
+        return [mejor];
+    } catch (error) {
+        mostrarMensaje(`Error: ${error.message}`, "error");
         return [];
     }
-
-    renderFavoritos(resultados);
-    cargarApod(resultados[0].date);
-    return resultados;
 }
 
 // Función del botón "Buscar": decide si busca por fecha o por nombre
